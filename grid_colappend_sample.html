@@ -1,0 +1,305 @@
+
+
+<html>
+    <head>
+        <style type="text/css">
+            .row 
+            {
+                left : 0px;
+                right : 5px;
+                overflow : hidden;
+                height : 24px;
+                text-align : center;
+                position : absolute;
+            }
+            .cell 
+            {
+                box-sizing : border-box;
+                height : 24px;
+                border : 1px solid silver;
+                border-top : none;
+                border-left : none;
+                position : absolute;
+            }
+        </style>
+        <script>
+            var viewcount = 10;
+
+            // format slots
+            var _cols_w = [];
+            var _cols_l = [];
+            var _rows_t = [];
+
+            // [TODO] row, cell object 화
+
+            function _createFormat(rowcount, colcount)
+            {
+                for(var i=0; i < rowcount; i++)
+                {
+                    _rows_t[i] = (24 * i);
+                }
+                for(var i=0; i < colcount; i++)
+                {
+                    _cols_w[i] = 76;
+                    _cols_l[i] = (76 * i);
+                }
+            }
+
+            function _updateFormat(rowcount, colcount) 
+            {
+                for (var i=0; i < rowcount; i++)
+                {
+                    _rows_t[i] = (24 * i);
+                }
+
+                for(var i=0; i < colcount; i++)
+                {
+                    // [TODO] cellCreate 시 기존 cell 정보도 다시 recreate 해야 함.
+                    //_cols_w[i] = (i % 2) == 0 ? 70 : 80;
+                    _cols_w[i] = 76;
+                    _cols_l[i] = (76 * i);
+/*
+                    if(i == 0)
+                        _cols_l[i] = 0;
+                    else
+                        _cols_l[i] = _cols_l[i-1] + _cols_w[i];
+*/
+                }
+            }
+
+            function addElement() 
+            {
+                var startTime = new Date();
+                var row, cell;
+                
+                var rowcount = 10;
+                _createFormat(rowcount, viewcount);
+
+                for (var i=0; i < rowcount; i++) // rows
+                {
+                    row = document.createElement("div");
+                    row.className = "row";
+
+                    row.style.top = _rows_t[i] + "px";
+                    row.style.width = "700px";
+
+                    document.getElementById("inner").appendChild(row);
+
+                    for (var j=0; j < viewcount; j++)
+                    {
+                        cell = document.createElement("div");
+
+                        cell._isUpdateArea = function ()
+                        {
+                            var left = parseInt(this.style.left);
+                            var width = parseInt(this.style.width);
+
+                            // (2) _isUpdateArea 기능 구현
+                            // viewcount 만큼 loop
+                            var body = document.getElementById("body");
+                            var container = document.getElementById("container");
+                            var update_left = container.scrollLeft,
+                                update_right = update_left + parseInt(container.style.width);
+                            
+                            var cell_l = left;
+                            var cell_r = left + width;
+
+                            if((update_left <= cell_r) && (update_right >= cell_l))
+                            {
+                                return true;
+                            }
+                            return false;
+                        }
+                        cell.className = "cell";
+
+                        cell.style.left = _cols_l[j] + "px";                        
+                        cell.style.width = _cols_w[j] + "px";
+                        cell.innerHTML = "cell" + i + "_" + j;
+                        row.appendChild(cell);
+                    }
+                    
+                    if(parseInt(row.style.width) < parseInt(cell.style.left) + parseInt(cell.style.width))
+                    {
+                        var diff = (parseInt(cell.style.left) + parseInt(cell.style.width)) - parseInt(row.style.width);
+                        row.style.width = parseInt(row.style.width) + diff;
+                    }
+                }
+                var endTime = new Date(); 
+                document.getElementById("time").value = ((endTime - startTime) / 1000);  
+            }
+
+            function CellCreate() 
+            {
+                var startTime = new Date();
+                var row, cell;
+                var rowcount = document.getElementById("rows").value;
+                var colcount = document.getElementById("cols").value;
+
+                // format update
+                _updateFormat(rowcount, colcount);
+
+                for (var i=0; i < rowcount; i++)
+                {
+                    var rows = document.getElementsByClassName("row");
+                    
+                    if (rows[i])
+                    {
+                        row = rows[i];
+                        
+                        // maximizing rowsize
+                        row.style.width = _cols_l[_cols_l.length-1] + _cols_w[_cols_w.length-1];
+                    }
+                    else
+                    {
+                        // 새 row 생성
+                        row = document.createElement("div");
+                        document.getElementById("inner").appendChild(row);
+
+                        row.style.top = _rows_t[i] + "px";
+
+                        // [check] 동적 element 생성 시, className 적용 안됨 -> cell append 처리 X.
+                        row.className = "row";
+
+                        // maximizing rowsize
+                        row.style.width = _cols_l[_cols_l.length-1] + _cols_w[_cols_w.length-1];
+
+                        // 새 row에 cell 생성
+                        var k = 0;
+                        while(k < viewcount)
+                        {
+                            cell = document.createElement("div");
+
+                            cell._isUpdateArea = function ()
+                            {
+                                var left = parseInt(this.style.left);
+                                var width = parseInt(this.style.width);
+
+                                // (2) _isUpdateArea 기능 구현
+                                // viewcount 만큼 loop
+                                var body = document.getElementById("body");
+                                var container = document.getElementById("container");
+                                var update_left = container.scrollLeft,
+                                    update_right = update_left + parseInt(container.style.width);
+                                
+                                var cell_l = left;
+                                var cell_r = left + width;
+
+                                if((update_left <= cell_r) && (update_right >= cell_l))
+                                {
+                                    return true;
+                                }
+                                return false;
+                            }
+
+                            row.appendChild(cell);
+                            cell.className = "cell";
+
+                            cell.style.left = _cols_l[k] + "px";
+                            cell.style.width = _cols_w[k] + "px";
+
+                            cell.innerHTML = "cell" + i + "_" + k;
+                            
+                            k++;
+                        }
+                    }
+                }
+                var endTime = new Date();
+                document.getElementById("time3").value = ((endTime - startTime) / 1000);
+            }
+
+            function gridScroll() 
+            {
+                var rowcount = document.getElementById("rows").value;
+                var colcount = document.getElementById("cols").value;
+
+                var container = document.getElementById("container");
+                var rows = document.getElementsByClassName("row");
+                var row, cells;
+
+                for(var i = 0; i < rowcount; i++) // rows 탐색
+                {
+                    row = rows[i];
+
+                    //var max_rowsize = _cols_l[_cols_l.length-1] + _cols_w[_cols_w.length-1];
+                    
+                    
+                    for (var j = 0; j < colcount; j++) // cols 탐색
+                    {
+                        // (1) direction 체크 (+) (dir)
+                        var delta = _cols_l[j] + _cols_w[j] - container.scrollLeft;
+                        var dir = (delta > 0 ? -1 : (delta < 0 ? 1 : 0));
+
+                        if (dir > 0)
+                        {
+                            var update_idx;
+                            cells = row.childNodes;
+                            
+                            update_idx = viewcount + j - 1; // [TODO]
+                            
+                            if (cells[j] && !cells[j]._isUpdateArea())
+                            {
+                                // (3) Column round robin (cell move)
+                                cells[j].style.width = _cols_w[update_idx] + "px"; // width 변경
+                                cells[j].style.left = _cols_l[update_idx] + _cols_w[update_idx] + "px"; // left 변경
+                                cells[j].innerHTML =  "cell" + "_" + i + "_" + (viewcount + j); // text 변경
+                                
+                                // row width 조절
+                                if(parseInt(row.style.width) < parseInt(cells[j].style.left) + parseInt(cells[j].style.width))
+                                {
+                                    var diff = (parseInt(cells[j].style.left) + parseInt(cells[j].style.width)) - parseInt(row.style.width);
+                                    row.style.width = parseInt(row.style.width) + diff;
+                                }
+                            }
+                        }
+                        else if (dir == 0)
+                        {
+                            break;
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+                }
+                document.getElementById("time2").value = - container.scrollLeft;
+            }
+/*
+            function incScroll()
+            {
+                var rows = document.getElementsByClassName("row");
+                for(var i=0; i < rows.length; i++)
+                {
+                    rows[i].scrollLeft += 30;
+                }
+            }
+
+            function desScroll()
+            {
+
+            }
+*/
+        </script>
+    </head>
+    <body onload=addElement()> 
+        <input id="time3" type="text" style=" position: absolute; left:210px; top:530px; width:100px; height : 50px; border:1px solid silver; "></input>
+        <button style="position: absolute; border:1px solid silver; width:100px; height:50px; left:210px; top:590px" onclick=CellCreate()>CellCreate</button>
+        <input id="rows" type="text" value="20" style=" position: absolute; left:100px; top:530px; width:100px; height : 50px; border:1px solid silver; "></input>
+        <input id="cols" type="text" value="20" style=" position: absolute; left:100px; top:590px; width:100px; height : 50px; border:1px solid silver; "></input>
+
+        <button style="position: absolute; border:1px solid silver; width:100px; height:50px; left:400px; top:530px" onclick=addElement()>addElement</button>
+        <input id="time" type="text" style=" position: absolute; left:510px; top:530px; width:100px; height : 50px; border:1px solid silver; "></input>
+        <input id="time2" type="text" style=" position: absolute; left:510px; top:590px; width:100px; height : 50px; border:1px solid silver; "></input>
+
+        <div id="body" style="position: absolute; left:15px; top:30px; border:1px solid silver; width:700px; height:400px;" >            
+            <div id="container" style="position: absolute; left:0px; top:0px; width:700px; height:400px; overflow:auto;" onscroll=gridScroll()>
+                <div id="inner" style="position: absolute; left:0px; top:0px; width:700px; height:383px;"></div>
+            </div>
+            <!--
+            <input type="button" style="position: absolute; left:3px; top:380px; width:15px; height:15px" onclick=desScroll()>
+            <input type="button" style="position: absolute; left:20px; top:380px; width:600px; height:15px">
+            <input type="button" style="position: absolute; left:680px; top:380px; width:15px; height:15px" onclick=incScroll()>
+            -->
+        </div>
+    </body>
+    </html>
+    
